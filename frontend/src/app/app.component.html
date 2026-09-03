@@ -1,0 +1,23 @@
+<main class="shell">
+  <header class="hero">
+    <div><span class="eyebrow">ATLAS TRAVEL MANAGER</span><h1>Planeje histórias<br><em>que valem a pena.</em></h1></div>
+    <p>Seu espaço para organizar destinos, datas e memórias.</p>
+  </header>
+  <section class="panel">
+    <div class="section-heading"><div><span class="eyebrow">NOVA EXPERIÊNCIA</span><h2>Adicionar viagem</h2></div><span class="feedback" role="status">{{ feedback }}</span></div>
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <input formControlName="destination" placeholder="Destino (ex.: Lisboa)" aria-label="Destino">
+      <input formControlName="country" placeholder="País" aria-label="País">
+      <label>Ida<input formControlName="startDate" type="date"></label>
+      <label>Volta<input formControlName="endDate" type="date"></label>
+      <select formControlName="status" aria-label="Status"><option value="PLANNED">Planejada</option><option value="COMPLETED">Concluída</option><option value="CANCELLED">Cancelada</option></select>
+      <input formControlName="notes" placeholder="Uma nota (opcional)" aria-label="Observações">
+      <button type="submit" [disabled]="saving">{{ saving ? 'Salvando...' : 'Salvar viagem →' }}</button>
+    </form>
+  </section>
+  <section class="list-section"><div class="section-heading"><div><span class="eyebrow">SEU MAPA</span><h2>Próximas aventuras</h2></div><strong>{{ travels.length }} {{ travels.length === 1 ? 'viagem' : 'viagens' }}</strong></div>
+    @if (loading) { <p class="empty">Carregando suas viagens...</p> } @else if (error) { <p class="empty">{{ error }} <button class="retry" (click)="loadTravels()">Tentar novamente</button></p> } @else if (travels.length === 0) { <p class="empty">Nenhuma viagem cadastrada ainda. A próxima história começa aqui.</p> } @else {
+      <div class="cards">@for (travel of travels; track travel.id) { <article class="card"><span class="tag">{{ statusLabels[travel.status] }}</span><h3>{{ travel.destination }}</h3><p>{{ travel.country }}</p><p>{{ travel.startDate | date:'mediumDate' }} — {{ travel.endDate | date:'mediumDate' }}</p>@if (travel.notes) { <p>{{ travel.notes }}</p> }</article> }</div>
+    }
+  </section>
+</main>
