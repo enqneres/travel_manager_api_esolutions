@@ -2,11 +2,13 @@ package com.esolutions.travel.travel;
 
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.*;
-import java.util.List;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 
 @RestController
 @RequestMapping("/api/travels")
+@SecurityRequirement(name = "bearerAuth")
 public class TravelController {
     private final TravelService service;
 
@@ -15,7 +17,10 @@ public class TravelController {
     }
 
     @GetMapping
-    public List<TravelResponse> findAll() { return service.findAll(); }
+    public Page<TravelResponse> findAll(@RequestParam(defaultValue = "0") int page,
+                                       @RequestParam(defaultValue = "20") int size) {
+        return service.findAll(page, size);
+    }
 
     @GetMapping("/{id}")
     public TravelResponse findById(@PathVariable Long id) { return service.findById(id); }

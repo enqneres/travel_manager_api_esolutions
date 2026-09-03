@@ -2,16 +2,17 @@ spring:
   application:
     name: travel-manager-api
   datasource:
-    url: jdbc:h2:mem:traveldb
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/travel}
+    username: ${SPRING_DATASOURCE_USERNAME:travel}
+    password: ${SPRING_DATASOURCE_PASSWORD:travel}
+    driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:update}
     open-in-view: false
-  h2:
-    console:
-      enabled: true
 server:
   port: 8080
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-this-development-secret-to-a-long-random-value}
+    expiration: ${JWT_EXPIRATION:PT24H}

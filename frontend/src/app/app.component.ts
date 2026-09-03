@@ -4,6 +4,7 @@ import { DatePipe } from '@angular/common';
 import { finalize } from 'rxjs';
 import { Travel, TravelPayload, TravelStatus } from './travel.model';
 import { TravelService } from './travel.service';
+import { AuthService } from './auth.service';
 
 @Component({
   selector: 'atlas-root',
@@ -16,6 +17,11 @@ import { TravelService } from './travel.service';
 export class AppComponent implements OnInit {
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly travelService = inject(TravelService);
+  private readonly authService = inject(AuthService);
+  readonly authForm = this.formBuilder.group({
+    email: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]]
+  });
   readonly form = this.formBuilder.group({
     destination: ['', [Validators.required, Validators.maxLength(120)]],
     country: ['', [Validators.required, Validators.maxLength(80)]],
@@ -29,18 +35,23 @@ export class AppComponent implements OnInit {
   saving = false;
   feedback = '';
   error = '';
+  authError = '';
+  authMode: 'login' | 'register' = 'login';
+  authenticated = !!this.authService.token();
+  page = 0;
+  totalPages = 0;
   readonly statusLabels: Record<TravelStatus, string> = {
     PLANNED: 'Planejada', COMPLETED: 'Concluída', CANCELLED: 'Cancelada'
   };
 
   ngOnInit(): void {
-    this.loadTravels();
+    if (this.authenticated) this.loadTravels();
   }
 
   loadTravels(): void {
     this.loading = true;
-    this.travelService.list().pipe(finalize(() => this.loading = false)).subscribe({
-      next: travels => { this.travels = travels; this.error = ''; },
+    this.travelService.list(this.page).pipe(finalize(() => this.loading = false)).subscribe({
+      next: result => { this.travels = result.content; this.totalPages = result.totalPages; this.error = ''; },
       error: () => this.error = 'Não foi possível carregar suas viagens.'
     });
   }
@@ -58,5 +69,34 @@ export class AppComponent implements OnInit {
       next: () => { this.form.reset({ status: 'PLANNED' }); this.feedback = 'Viagem adicionada!'; this.loadTravels(); },
       error: () => this.feedback = 'Não foi possível salvar. Tente novamente.'
     });
+  }
+
+  authenticate(): void {
+    if (this.authForm.invalid) {
+      this.authForm.markAllAsTouched();
+      return;
+    }
+    const request = this.authForm.getRawValue();
+    const action = this.authMode === 'login'
+      ? this.authService.login(request)
+      : this.authService.register(request);
+    action.subscribe({
+      next: () => { this.authenticated = true; this.authError = ''; this.loadTravels(); },
+      error: response => this.authError = response.status === 409
+        ? 'Este e-mail já está cadastrado.' : 'Não foi possível autenticar.'
+    });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.authenticated = false;
+    this.travels = [];
+  }
+
+  changePage(page: number): void {
+    if (page >= 0 && page < this.totalPages) {
+      this.page = page;
+      this.loadTravels();
+    }
   }
 }

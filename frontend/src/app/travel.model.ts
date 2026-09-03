@@ -8,6 +8,15 @@ export interface Travel {
   endDate: string;
   status: TravelStatus;
   notes?: string;
+  createdAt?: string;
+}
+
+export interface TravelPage {
+  content: Travel[];
+  number: number;
+  size: number;
+  totalElements: number;
+  totalPages: number;
 }
 
 export interface TravelPayload {

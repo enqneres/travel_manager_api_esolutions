@@ -1,5 +1,6 @@
 package com.esolutions.travel.travel;
 
+import com.esolutions.travel.auth.AppUser;
 import jakarta.persistence.*;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
@@ -10,6 +11,10 @@ public class Travel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "user_id", nullable = false)
+    private AppUser owner;
 
     @Column(nullable = false, length = 120)
     private String destination;
@@ -36,8 +41,9 @@ public class Travel {
     protected Travel() {
     }
 
-    public Travel(String destination, String country, LocalDate startDate, LocalDate endDate,
+    public Travel(AppUser owner, String destination, String country, LocalDate startDate, LocalDate endDate,
                   TravelStatus status, String notes) {
+        this.owner = owner;
         this.destination = destination;
         this.country = country;
         this.startDate = startDate;
@@ -52,6 +58,7 @@ public class Travel {
     }
 
     public Long getId() { return id; }
+    public AppUser getOwner() { return owner; }
     public String getDestination() { return destination; }
     public String getCountry() { return country; }
     public LocalDate getStartDate() { return startDate; }
