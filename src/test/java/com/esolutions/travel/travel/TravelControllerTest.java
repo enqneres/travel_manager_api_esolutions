@@ -7,6 +7,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import java.time.LocalDate;
 
@@ -20,6 +21,7 @@ class TravelControllerTest {
     @Autowired ObjectMapper objectMapper;
 
     @Test
+    @WithMockUser(username = "test@example.com")
     void createsTravelWithValidPayload() throws Exception {
         TravelRequest request = new TravelRequest("Lisboa", "Portugal",
                 LocalDate.of(2026, 10, 10), LocalDate.of(2026, 10, 17),
@@ -34,6 +36,7 @@ class TravelControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "test@example.com")
     void rejectsInvalidDateRange() throws Exception {
         TravelRequest request = new TravelRequest("Lisboa", "Portugal",
                 LocalDate.of(2026, 10, 17), LocalDate.of(2026, 10, 10),

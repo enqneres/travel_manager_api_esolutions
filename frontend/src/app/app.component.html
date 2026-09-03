@@ -3,6 +3,21 @@
     <div><span class="eyebrow">ATLAS TRAVEL MANAGER</span><h1>Planeje histórias<br><em>que valem a pena.</em></h1></div>
     <p>Seu espaço para organizar destinos, datas e memórias.</p>
   </header>
+  @if (!authenticated) {
+    <section class="panel">
+      <div class="section-heading"><div><span class="eyebrow">ACESSO</span><h2>{{ authMode === 'login' ? 'Entrar' : 'Criar conta' }}</h2></div></div>
+      <form [formGroup]="authForm" (ngSubmit)="authenticate()">
+        <input formControlName="email" type="email" placeholder="Seu e-mail" aria-label="E-mail">
+        <input formControlName="password" type="password" placeholder="Senha (mínimo 8 caracteres)" aria-label="Senha">
+        <button type="submit">{{ authMode === 'login' ? 'Entrar →' : 'Cadastrar →' }}</button>
+      </form>
+      @if (authError) { <p class="feedback">{{ authError }}</p> }
+      <button class="retry" type="button" (click)="authMode = authMode === 'login' ? 'register' : 'login'">
+        {{ authMode === 'login' ? 'Ainda não tenho conta' : 'Já tenho uma conta' }}
+      </button>
+    </section>
+  } @else {
+    <button class="retry" type="button" (click)="logout()">Sair</button>
   <section class="panel">
     <div class="section-heading"><div><span class="eyebrow">NOVA EXPERIÊNCIA</span><h2>Adicionar viagem</h2></div><span class="feedback" role="status">{{ feedback }}</span></div>
     <form [formGroup]="form" (ngSubmit)="submit()">
@@ -19,5 +34,12 @@
     @if (loading) { <p class="empty">Carregando suas viagens...</p> } @else if (error) { <p class="empty">{{ error }} <button class="retry" (click)="loadTravels()">Tentar novamente</button></p> } @else if (travels.length === 0) { <p class="empty">Nenhuma viagem cadastrada ainda. A próxima história começa aqui.</p> } @else {
       <div class="cards">@for (travel of travels; track travel.id) { <article class="card"><span class="tag">{{ statusLabels[travel.status] }}</span><h3>{{ travel.destination }}</h3><p>{{ travel.country }}</p><p>{{ travel.startDate | date:'mediumDate' }} — {{ travel.endDate | date:'mediumDate' }}</p>@if (travel.notes) { <p>{{ travel.notes }}</p> }</article> }</div>
     }
+    @if (totalPages > 1) {
+      <nav aria-label="Paginação"><button class="retry" (click)="changePage(page - 1)" [disabled]="page === 0">Anterior</button>
+        <span>Página {{ page + 1 }} de {{ totalPages }}</span>
+        <button class="retry" (click)="changePage(page + 1)" [disabled]="page + 1 >= totalPages">Próxima</button>
+      </nav>
+    }
   </section>
+  }
 </main>

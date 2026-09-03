@@ -1,29 +1,28 @@
 # Atlas Travel Manager
 
-API REST e interface web Angular para organizar viagens de forma simples. Este projeto evoluiu de um exercício introdutório de Spring Boot para uma aplicação demonstrável, com validação, persistência, testes e execução reproduzível.
+API REST e interface web Angular para organizar viagens de forma simples, com autenticação JWT e dados isolados por usuário.
 
 ## Destaques
 
 - Java 17 + Spring Boot 3 + Spring Data JPA
+- Registro/login com JWT e senhas protegidas por BCrypt
 - CRUD de viagens com DTOs, Bean Validation e respostas HTTP consistentes
-- H2 para desenvolvimento local, sem dependência externa
+- PostgreSQL reproduzível via Docker Compose (H2 é usado apenas nos testes)
+- Paginação `page`/`size` (tamanho máximo 50)
 - Frontend responsivo servido pelo próprio Spring Boot
 - Dockerfile multi-stage e Docker Compose
 - Angular standalone com Reactive Forms, service HTTP e estados de loading/erro/vazio
 
 ## Executar localmente
 
-Pré-requisito: Java 17, Maven 3.9+ e Node 22+.
+Pré-requisito: Java 17, Maven 3.9+, Node 22+ e Docker (para PostgreSQL).
 
 ```bash
-cd frontend
-npm.cmd install
-npm.cmd run build
-cd ..
-mvn spring-boot:run
+docker compose up --build
 ```
 
-Abra http://localhost:8080. A API está disponível em `/api/travels`.
+Abra http://localhost:8080. A API está disponível em `/api`, e a documentação Swagger em http://localhost:8080/swagger-ui.html.
+Em produção, defina `POSTGRES_*` e um `JWT_SECRET` forte no ambiente antes de iniciar o Compose.
 
 Para desenvolver o frontend separadamente, em outro terminal:
 
@@ -35,23 +34,31 @@ npm.cmd start
 
 Abra http://localhost:4200. O proxy encaminha `/api` para o backend em `localhost:8080`.
 
-## Executar com Docker
+Para executar o backend sem Docker, configure `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`,
+`SPRING_DATASOURCE_PASSWORD` e `JWT_SECRET`, então execute:
 
 ```bash
-docker compose up --build
+mvn spring-boot:run
 ```
 
-## Contrato rápido
+## Autenticação e contrato rápido
+
+Crie uma conta e use o token retornado nas rotas de viagens:
 
 ```bash
-curl -X POST http://localhost:8080/api/travels \
+curl -X POST http://localhost:8080/api/auth/register \
   -H "Content-Type: application/json" \
-  -d '{"destination":"Lisboa","country":"Portugal","startDate":"2026-10-10","endDate":"2026-10-17","status":"PLANNED","notes":"Conhecer Alfama"}'
+  -d '{"email":"voce@example.com","password":"senha-segura"}'
+
+curl "http://localhost:8080/api/travels?page=0&size=20" \
+  -H "Authorization: Bearer SEU_TOKEN"
 ```
 
 | Método | Rota | Descrição |
 |---|---|---|
-| GET | `/api/travels` | Lista viagens |
+| POST | `/api/auth/register` | Registra usuário e retorna JWT |
+| POST | `/api/auth/login` | Autentica usuário e retorna JWT |
+| GET | `/api/travels?page=0&size=20` | Lista somente suas viagens (máximo 50 por página) |
 | GET | `/api/travels/{id}` | Consulta uma viagem |
 | POST | `/api/travels` | Cria uma viagem |
 | PUT | `/api/travels/{id}` | Atualiza uma viagem |
@@ -67,8 +74,8 @@ mvn test
 
 ## Arquitetura
 
-`Angular -> REST Controller -> Service -> Repository -> H2`, com `TravelRequest`/`TravelResponse` isolando o contrato HTTP da entidade JPA. O frontend usa Reactive Forms, `TravelService` e possui estados de carregamento, erro e lista vazia.
+`Angular -> JWT REST Controller -> Service -> Repository -> PostgreSQL`, com `TravelRequest`/`TravelResponse` isolando o contrato HTTP da entidade JPA. O frontend mantém o token, envia o header Bearer e exibe páginas de viagens.
 
-## Próximos passos
+## Integração contínua
 
-Autenticação por usuário, PostgreSQL em produção, paginação, OpenAPI/Swagger e pipeline CI são evoluções naturais para uma segunda versão.
+O workflow `.github/workflows/ci.yml` executa testes Maven, build Angular e build da imagem Docker em pushes e pull requests.

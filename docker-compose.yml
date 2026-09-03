@@ -1,7 +1,30 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-travel}
+      POSTGRES_USER: ${POSTGRES_USER:-travel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-travel}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-travel} -d $${POSTGRES_DB:-travel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
   app:
     build: .
     ports:
-      - "8080:8080"
+      - "${APP_PORT:-8080}:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-travel}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-travel}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-travel}
+      JWT_SECRET: ${JWT_SECRET:-change-this-development-secret-to-a-long-random-value}
+      SPRING_JPA_HIBERNATE_DDL_AUTO: ${SPRING_JPA_HIBERNATE_DDL_AUTO:-update}
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
